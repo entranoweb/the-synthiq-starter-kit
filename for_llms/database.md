@@ -4,8 +4,9 @@
 
 ### Technology Stack
 - **Database**: PostgreSQL
-- **ORM**: Drizzle
-- **Schema Location**: `drizzle/schema.ts`
+- **ORM**: Drizzle (migrated from Prisma)
+- **Schema Location**: `lib/db/schema.ts`
+- **Database Client**: `lib/db/index.ts`
 - **Generated Types**: `lib/db`
 
 ### Essential Commands
@@ -50,6 +51,7 @@ export const organizations = pgTable('organizations', {
 - `StripeCustomer` - Customer records for Stripe integration
 - `UserSubscription` - Active subscription tracking
 - `PaymentHistory` - Payment intent tracking
+- `Organization` - Optional grouping for users
 
 ### NextAuth Required Models
 - `Account` - OAuth provider accounts
@@ -81,9 +83,12 @@ export const membershipStatus = pgEnum('membership_status', [
 - User → PaymentHistory (one-to-many)
 - User → StripeCustomer (one-to-one)
 - User → Organization (many-to-one)
+<<<<<<< HEAD
 
 ### Organization Relationships
 - Organization → Users (one-to-many)
+=======
+>>>>>>> master
 
 ### Stripe Relationships
 - StripeProduct → StripePrice (one-to-many)
