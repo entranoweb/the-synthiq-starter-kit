@@ -101,10 +101,11 @@ export const membershipStatus = pgEnum('membership_status', [
 ```typescript
 // Get user with subscription info
 const user = await db.query.users.findFirst({
-  where: eq(users.id, userId),
+  where: (users, { eq }) => eq(users.id, userId),
   with: {
     subscriptions: {
-      where: inArray(userSubscriptions.status, ['active', 'trialing']),
+      where: (subscriptions, { inArray }) =>
+        inArray(subscriptions.status, ['active', 'trialing']),
       with: { stripeProduct: true }
     }
   }
@@ -115,10 +116,11 @@ const user = await db.query.users.findFirst({
 ```typescript
 // Check active subscription
 const subscription = await db.query.userSubscriptions.findFirst({
-  where: and(
-    eq(userSubscriptions.userId, userId),
-    inArray(userSubscriptions.status, ['active', 'trialing'])
-  ),
+  where: (userSubscriptions, { and, eq, inArray }) =>
+    and(
+      eq(userSubscriptions.userId, userId),
+      inArray(userSubscriptions.status, ['active', 'trialing'])
+    ),
   with: {
     stripeProduct: true,
     stripePrice: true
