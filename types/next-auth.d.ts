@@ -1,6 +1,8 @@
 import "next-auth";
 import { DefaultSession } from "next-auth";
-import { UserRole } from "../app/generated/prisma";
+import { userRoleEnum } from "../lib/db/enums";
+
+type UserRole = (typeof userRoleEnum.enumValues)[number];
 
 declare module "next-auth" {
   interface Session {

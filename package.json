@@ -7,13 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:sync-stripe": "tsx prisma/sync-stripe-products.ts",
-    "db:setup-admin": "tsx prisma/seed-admin.ts",
     "db:migrate": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
-    "db:reset": "prisma migrate reset",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx scripts/seed.ts",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
