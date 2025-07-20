@@ -22,6 +22,19 @@ export const auth = betterAuth({
   session: {
     cookieName: "next-auth.session-token", // Preserve existing sessions
     expiresIn: 60 * 60 * 24 * 7, // 7 days
+    fields: {
+      expiresAt: "expires", // Map existing `expires` field to BetterAuth's `expiresAt`
+      token: "sessionToken" // Map existing `sessionToken` field to BetterAuth's `token`
+    }
+  },
+  account: {
+    fields: {
+      accountId: "providerAccountId",
+      refreshToken: "refresh_token",
+      accessToken: "access_token", 
+      accessTokenExpiresAt: "expires_at",
+      idToken: "id_token",
+    }
   },
   plugins: [
     stripe({

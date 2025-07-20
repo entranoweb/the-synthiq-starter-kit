@@ -1,13 +1,27 @@
-import {
-  MembershipStatus,
-  PrismaClient,
-  UserRole,
-} from "./db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../app/generated/prisma"
 import { stripe } from "./stripe";
-// TODO: replace with BetterAuth Stripe hook
-// import { manageSubscriptionStatusChange } from "./stripe-admin";
+import { db } from "./db";
+import { users, userSubscriptions, stripeProducts, stripePrices } from "./db/schema";
+import { userRoleEnum, membershipStatusEnum } from "./db/enums";
+import { eq, and, desc } from "drizzle-orm";
 
-const prisma = new PrismaClient();
+// Type aliases for compatibility
+type UserRole = (typeof userRoleEnum.enumValues)[number];
+type MembershipStatus = (typeof membershipStatusEnum.enumValues)[number];
+
+// Constants for backward compatibility
+const UserRoleEnum = {
+  USER: 'USER' as const,
+  PREMIUM: 'PREMIUM' as const,
+  ADMIN: 'ADMIN' as const,
+  BANNED: 'BANNED' as const
+};
+
+const MembershipStatusEnum = {
+  ACTIVE: 'ACTIVE' as const,
+  INACTIVE: 'INACTIVE' as const,
+  CANCELED: 'CANCELED' as const,
+  PAST_DUE: 'PAST_DUE' as const
+};
 
 // Cache for product sync to prevent frequent API calls
 let productSyncCache = {
@@ -322,7 +336,7 @@ export async function checkUserAccess(userId: string, autoSync = true) {
 export async function updateUserMembership(
   userId: string,
   stripeProductId: string | null,
-  membershipStatus: MembershipStatus = MembershipStatus.ACTIVE
+  membershipStatus: MembershipStatus = MembershipStatusEnum.ACTIVE
 ) {
   // Get current user to check if they're an admin
   const currentUser = await prisma.user.findUnique({
