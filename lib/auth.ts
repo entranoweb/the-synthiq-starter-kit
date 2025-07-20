@@ -1,72 +1,59 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import NextAuth, { getServerSession, NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import { cache } from "react";
-import { PrismaClient } from "../app/generated/prisma";
+import { betterAuth } from "better-auth";
+import { stripe } from "@better-auth/stripe";
+import Stripe from "stripe";
+import { db } from "./db";
 
-const prisma = new PrismaClient();
-const adapter = PrismaAdapter(prisma);
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-06-20",
+});
 
-export const authOptions: NextAuthOptions = {
-  adapter,
-  providers: [
-    GoogleProvider({
+export const auth = betterAuth({
+  database: db,
+  emailAndPassword: {
+    enabled: true,
+    autoSignIn: true,
+  },
+  socialProviders: {
+    google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    },
+  },
+  session: {
+    cookieName: "next-auth.session-token", // Preserve existing sessions
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+  },
+  plugins: [
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      createCustomerOnSignUp: true,
+      subscription: {
+        enabled: true,
+        plans: [
+          {
+            name: "basic",
+            priceId: process.env.STRIPE_BASIC_PRICE_ID!,
+            limits: { tokens: 100 },
+          },
+          {
+            name: "pro",
+            priceId: process.env.STRIPE_PRO_PRICE_ID!,
+            limits: { tokens: 1000 },
+            freeTrial: { days: 14 },
+          },
+        ],
+      },
+      events: {
+        onSubscriptionCreated: async ({ product, user }) => {
+          // Token allocation logic based on product metadata
+          const tokens = Number(product.metadata.tokens ?? 0);
+          // TODO: Update user tokens in database when Drizzle migration is complete
+          console.log(`Allocating ${tokens} tokens to user ${user.id}`);
+        },
+      },
     }),
   ],
-  theme: {
-    logo: "/logo.png",
-    colorScheme: "light",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    callbackUrl: {
-      name: `next-auth.callback-url`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-    csrfToken: {
-      name: `next-auth.csrf-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
-  callbacks: {
-    session({ session, user }) {
-      if (session.user) {
-        session.user.role = user.role;
-        session.user.id = user.id;
-        session.user.stripeProductId = user.stripeProductId;
-        session.user.tokens = user.tokens;
-        session.user.tokensExpiresAt = user.tokensExpiresAt;
-      }
-      return session;
-    },
-  },
-};
+});
 
-const handler = NextAuth(authOptions);
-
-export { handler as GET, handler as POST };
-
-const getSession = cache(() => getServerSession(authOptions));
-
-export default getSession;
+export const { GET, POST } = auth.handler;

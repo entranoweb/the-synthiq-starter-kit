@@ -1,8 +1,6 @@
-import { pgEnum, pgTable, text, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-
-export const userRoleEnum = pgEnum("user_role", ["USER", "PREMIUM", "ADMIN", "BANNED"]);
-export const membershipStatusEnum = pgEnum("membership_status", ["ACTIVE", "INACTIVE", "CANCELED", "PAST_DUE"]);
+import { userRoleEnum, membershipStatusEnum } from "./enums";
 
 export const organizations = pgTable("organizations", {
   id: text("id").primaryKey(),
@@ -70,9 +68,9 @@ export const stripePrices = pgTable("stripe_prices", {
   productId: text("product_id").notNull(),
   active: boolean("active").notNull().default(true),
   currency: text("currency").notNull(),
-  type: text("type").notNull(),
-  unitAmount: integer("unit_amount"),
-  interval: text("interval"),
+  type: text("type").notNull(), // one_time, recurring
+  unitAmount: integer("unit_amount"), // Amount in cents
+  interval: text("interval"), // month, year
   intervalCount: integer("interval_count"),
   trialPeriodDays: integer("trial_period_days"),
   metadata: jsonb("metadata"),
@@ -80,25 +78,27 @@ export const stripePrices = pgTable("stripe_prices", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Stripe Customers
 export const stripeCustomers = pgTable("stripe_customers", {
   id: text("id").primaryKey(),
-  userId: text("user_id").notNull().unique(),
-  stripeCustomerId: text("stripe_customer_id").notNull().unique(),
+  userId: text("user_id").unique().notNull(),
+  stripeCustomerId: text("stripe_customer_id").unique().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// User Subscriptions
 export const userSubscriptions = pgTable("user_subscriptions", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
   stripeCustomerId: text("stripe_customer_id").notNull(),
-  stripeSubscriptionId: text("stripe_subscription_id").notNull().unique(),
+  stripeSubscriptionId: text("stripe_subscription_id").unique().notNull(),
   stripePriceId: text("stripe_price_id").notNull(),
   stripeProductId: text("stripe_product_id").notNull(),
-  status: text("status").notNull(),
+  status: text("status").notNull(), // active, canceled, incomplete, past_due
   currentPeriodStart: timestamp("current_period_start", { withTimezone: true }).notNull(),
   currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }).notNull(),
-  cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
   canceledAt: timestamp("canceled_at", { withTimezone: true }),
   trialStart: timestamp("trial_start", { withTimezone: true }),
   trialEnd: timestamp("trial_end", { withTimezone: true }),
@@ -107,6 +107,7 @@ export const userSubscriptions = pgTable("user_subscriptions", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Payment History
 export const paymentHistory = pgTable("payment_history", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull(),
