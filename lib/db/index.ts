@@ -2,5 +2,16 @@ import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const { DATABASE_URL } = process.env;
+
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set in environment variables');
+}
+
+const pool = new Pool({ 
+  connectionString: DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 10_000,
+});
+
 export const db = drizzle(pool, { schema });

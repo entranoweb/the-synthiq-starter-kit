@@ -6,7 +6,7 @@ A complete full-stack starter kit that integrates Next.js with Stripe payments, 
 
 ### Authentication & Authorization
 
-- **NextAuth.js** integration with Prisma adapter
+- **NextAuth.js** integration with Drizzle adapter
 - **Google OAuth** authentication
 - **Role-based access control** (USER, PREMIUM, ADMIN)
 - Session management and middleware protection
@@ -14,7 +14,7 @@ A complete full-stack starter kit that integrates Next.js with Stripe payments, 
 
 ### Database & ORM
 
-- **Prisma** ORM for type-safe database operations
+- **Drizzle** ORM for type-safe database operations
 - **PostgreSQL** database with enum support
 - Automated schema migrations
 - Database seeding support
@@ -90,10 +90,10 @@ A complete full-stack starter kit that integrates Next.js with Stripe payments, 
 │   ├── stripe.ts                   # Stripe configuration
 │   ├── stripe-admin.ts             # Stripe admin functions
 │   └── subscription.ts             # Subscription & token utilities
-├── prisma/
-│   ├── schema.prisma               # Database schema with enums
-│   ├── seed.ts                     # Stripe product sync
-│   └── seed-admin.ts               # Admin user setup
+├── drizzle/
+│   ├── schema.ts                  # Database schema
+│   ├── migrations/                # Database migrations
+│   └── seed-admin.ts              # Admin user setup
 └── types/
     └── next-auth.d.ts              # NextAuth type extensions
 ```
@@ -139,11 +139,11 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 #### Database Schema
 
 ```bash
-# Generate Prisma client
-yarn prisma generate
+# Generate Drizzle types
+yarn drizzle-kit generate
 
 # Push schema to database
-yarn prisma db push
+yarn drizzle-kit push
 
 # Sync products from Stripe to database
 yarn db:sync-stripe
@@ -284,7 +284,7 @@ The system now uses Stripe products as the single source of truth:
 - Protected API routes
 - Stripe webhook signature verification
 - Environment variable validation
-- SQL injection prevention (Prisma)
+- SQL injection prevention (Drizzle)
 
 ## 📦 Deployment
 
@@ -318,7 +318,7 @@ yarn build
 - [Next.js Documentation](https://nextjs.org/docs)
 - [NextAuth.js Documentation](https://next-auth.js.org)
 - [Stripe Documentation](https://stripe.com/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
+- [Drizzle ORM Documentation](https://orm.drizzle.team/)
 - [ShadcnUI Documentation](https://ui.shadcn.com)
 
 ## 🤝 Contributing
