@@ -1,0 +1,21 @@
+name: Simple Test Action
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  test:
+    if: contains(github.event.comment.body, '@test')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Response
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🤖 Test workflow is working! GitHub Actions are active on this repository.'
+            })
