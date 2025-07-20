@@ -4,14 +4,14 @@
 
 ### Technology Stack
 - **Database**: PostgreSQL
-- **ORM**: Prisma
-- **Schema Location**: `prisma/schema.prisma`
-- **Client Output**: `app/generated/prisma` (custom location)
+- **ORM**: Drizzle
+- **Schema Location**: `drizzle/schema.ts`
+- **Generated Types**: `lib/db`
 
 ### Essential Commands
 ```bash
-npm run db:generate     # Generate Prisma client
-npm run db:migrate      # Run migrations
+npm run db:generate     # Generate Drizzle types
+npm run db:migrate      # Apply migrations
 npm run db:reset        # Reset database
 npm run db:sync-stripe  # Sync Stripe products
 npm run db:setup-admin  # Setup admin user
@@ -19,19 +19,29 @@ npm run db:setup-admin  # Setup admin user
 
 ## Core Models
 
-### User Model
-```prisma
-model User {
-  id               String           @id @default(cuid())
-  email            String           @unique
-  name             String?
-  role             UserRole         @default(USER)
-  stripeProductId  String?          # Links to active subscription
-  membershipStatus MembershipStatus @default(ACTIVE)
-  tokens           Int              @default(0)
-  tokensExpiresAt  DateTime?
-  // ... relationships
-}
+### User Table
+```ts
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),
+  email: text('email').unique().notNull(),
+  name: text('name'),
+  role: userRole('role').default('USER'),
+  organizationId: text('organization_id').references(() => organizations.id),
+  stripeProductId: text('stripe_product_id'),
+  membershipStatus: membershipStatus('membership_status').default('ACTIVE'),
+  tokens: integer('tokens').default(0),
+  tokensExpiresAt: timestamp('tokens_expires_at')
+});
+```
+
+### Organizations Table
+```ts
+export const organizations = pgTable('organizations', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow()
+});
 ```
 
 ### Stripe Integration Models
@@ -49,23 +59,18 @@ model User {
 ## Enums & Types
 
 ### UserRole
-```prisma
-enum UserRole {
-  USER      # Default role, free content access
-  PREMIUM   # Active subscription, premium content access
-  ADMIN     # Full system access, admin panel access
-  BANNED    # No access to any content
-}
+```ts
+export const userRole = pgEnum('user_role', ['USER', 'PREMIUM', 'ADMIN', 'BANNED']);
 ```
 
 ### MembershipStatus
-```prisma
-enum MembershipStatus {
-  ACTIVE      # Active subscription
-  INACTIVE    # No subscription
-  CANCELED    # Subscription cancelled
-  PAST_DUE    # Payment failed
-}
+```ts
+export const membershipStatus = pgEnum('membership_status', [
+  'ACTIVE',
+  'INACTIVE',
+  'CANCELED',
+  'PAST_DUE'
+]);
 ```
 
 ## Database Relationships
@@ -75,6 +80,10 @@ enum MembershipStatus {
 - User → UserSubscription (one-to-many)
 - User → PaymentHistory (one-to-many)
 - User → StripeCustomer (one-to-one)
+- User → Organization (many-to-one)
+
+### Organization Relationships
+- Organization → Users (one-to-many)
 
 ### Stripe Relationships
 - StripeProduct → StripePrice (one-to-many)
@@ -86,12 +95,12 @@ enum MembershipStatus {
 ### User Management
 ```typescript
 // Get user with subscription info
-const user = await prisma.user.findUnique({
-  where: { id: userId },
-  include: {
+const user = await db.query.users.findFirst({
+  where: eq(users.id, userId),
+  with: {
     subscriptions: {
-      where: { status: { in: ['active', 'trialing'] } },
-      include: { stripeProduct: true }
+      where: inArray(userSubscriptions.status, ['active', 'trialing']),
+      with: { stripeProduct: true }
     }
   }
 });
@@ -100,12 +109,12 @@ const user = await prisma.user.findUnique({
 ### Subscription Queries
 ```typescript
 // Check active subscription
-const subscription = await prisma.userSubscription.findFirst({
-  where: {
-    userId,
-    status: { in: ['active', 'trialing'] }
-  },
-  include: {
+const subscription = await db.query.userSubscriptions.findFirst({
+  where: and(
+    eq(userSubscriptions.userId, userId),
+    inArray(userSubscriptions.status, ['active', 'trialing'])
+  ),
+  with: {
     stripeProduct: true,
     stripePrice: true
   }
@@ -115,13 +124,10 @@ const subscription = await prisma.userSubscription.findFirst({
 ### Token Management
 ```typescript
 // Update user tokens
-await prisma.user.update({
-  where: { id: userId },
-  data: {
-    tokens: newTokenCount,
-    tokensExpiresAt: expirationDate
-  }
-});
+await db
+  .update(users)
+  .set({ tokens: newTokenCount, tokensExpiresAt: expirationDate })
+  .where(eq(users.id, userId));
 ```
 
 ## Data Synchronization
@@ -140,12 +146,12 @@ await prisma.user.update({
 ## Database Migrations
 
 ### Migration Strategy
-- Schema changes via Prisma migrations
+- Schema changes via Drizzle migrations
 - Rollback support for failed migrations
 - Environment-specific migration runs
 
 ### Migration Files
-- Located in `prisma/migrations/`
+- Located in `drizzle/migrations/`
 - Automatic migration generation
 - SQL migration files for review
 
@@ -168,8 +174,7 @@ await prisma.user.update({
 - Foreign key relationships
 - Cascade deletes for cleanup
 
-### Validation
-- Prisma schema validation
+- Drizzle schema validation
 - Application-level validation
 - Database-level constraints
 
