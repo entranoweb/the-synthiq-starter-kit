@@ -48,8 +48,27 @@ export const auth = betterAuth({
         onSubscriptionCreated: async ({ product, user }) => {
           // Token allocation logic based on product metadata
           const tokens = Number(product.metadata.tokens ?? 0);
-          // TODO: Update user tokens in database when Drizzle migration is complete
-          console.log(`Allocating ${tokens} tokens to user ${user.id}`);
+          
+          if (tokens > 0) {
+            try {
+              // Import here to avoid circular dependency
+              const { db } = await import("./db");
+              const { users } = await import("./db/schema");
+              const { eq } = await import("drizzle-orm");
+              
+              // Update user tokens in database
+              await db.update(users)
+                .set({ 
+                  tokens,
+                  tokensExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+                })
+                .where(eq(users.id, user.id));
+              
+              console.log(`✅ Allocated ${tokens} tokens to user ${user.id}`);
+            } catch (error) {
+              console.error(`❌ Failed to allocate tokens to user ${user.id}:`, error);
+            }
+          }
         },
       },
     }),
