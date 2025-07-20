@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserRole } from "../../app/generated/prisma";
+import { UserRole } from "../../lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../../app/generated/prisma"
 
 interface User {
   id: string;

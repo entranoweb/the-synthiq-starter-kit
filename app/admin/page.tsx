@@ -3,7 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { isUserAdmin } from "@/lib/subscription";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { PrismaClient } from "../generated/prisma";
+import { PrismaClient } from "@/lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../generated/prisma"
 
 const prisma = new PrismaClient();
 

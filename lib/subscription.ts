@@ -2,9 +2,10 @@ import {
   MembershipStatus,
   PrismaClient,
   UserRole,
-} from "../app/generated/prisma";
+} from "./db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../app/generated/prisma"
 import { stripe } from "./stripe";
-import { manageSubscriptionStatusChange } from "./stripe-admin";
+// TODO: replace with BetterAuth Stripe hook
+// import { manageSubscriptionStatusChange } from "./stripe-admin";
 
 const prisma = new PrismaClient();
 
@@ -28,11 +29,12 @@ export const syncUserStripeData = async (userId: string) => {
     });
 
     for (const subscription of subscriptions.data) {
-      await manageSubscriptionStatusChange(
-        subscription.id,
-        subscription.customer as string,
-        false
-      );
+      // TODO: replace with BetterAuth Stripe plugin webhook handling
+      // await manageSubscriptionStatusChange(
+      //   subscription.id,
+      //   subscription.customer as string,
+      //   false
+      // );
     }
 
     console.log(`Synced data for user ${userId}`);

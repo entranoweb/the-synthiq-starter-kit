@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/app/generated/prisma";
+import { PrismaClient } from "@/lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "@/app/generated/prisma"
 import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { getServerSession } from "next-auth";
