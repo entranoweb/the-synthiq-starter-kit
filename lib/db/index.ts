@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import * as schema from '@/drizzle/schema';
 
 const { DATABASE_URL } = process.env;
 
@@ -13,5 +14,5 @@ export const pool = new Pool({
   idleTimeoutMillis: 10_000,
 });
 
-export const db = drizzle(pool);
+export const db = drizzle(pool, { schema });
 
