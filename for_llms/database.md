@@ -7,6 +7,7 @@
 - **ORM**: Prisma
 - **Schema Location**: `prisma/schema.prisma`
 - **Client Output**: `app/generated/prisma` (custom location)
+- **Drizzle Schema**: `lib/db/schema.ts` with `lib/db/index.ts`
 
 ### Essential Commands
 ```bash
@@ -40,6 +41,7 @@ model User {
 - `StripeCustomer` - Customer records for Stripe integration
 - `UserSubscription` - Active subscription tracking
 - `PaymentHistory` - Payment intent tracking
+- `Organization` - Optional grouping for users
 
 ### NextAuth Required Models
 - `Account` - OAuth provider accounts
@@ -75,6 +77,7 @@ enum MembershipStatus {
 - User → UserSubscription (one-to-many)
 - User → PaymentHistory (one-to-many)
 - User → StripeCustomer (one-to-one)
+- User → Organization (many-to-one)
 
 ### Stripe Relationships
 - StripeProduct → StripePrice (one-to-many)
