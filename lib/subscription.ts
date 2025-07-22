@@ -158,34 +158,32 @@ export const getUserSubscription = async (userId: string, autoSync = true) => {
     await syncUserStripeData(userId);
   }
   
-  return await prisma.userSubscription.findFirst({
-    where: {
-      userId,
-      status: { in: ["active", "trialing"] },
-    },
-    include: {
+  const result = await db.query.userSubscriptions.findFirst({
+    where: and(
+      eq(userSubscriptions.userId, userId),
+      eq(userSubscriptions.status, 'ACTIVE')
+    ),
+    with: {
       stripeProduct: true,
       stripePrice: true,
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: desc(userSubscriptions.createdAt),
   });
+  
+  return result || null;
 };
 
 export const getUserActiveSubscriptions = async (userId: string) => {
-  return await prisma.userSubscription.findMany({
-    where: {
-      userId,
-      status: { in: ["active", "trialing"] },
-    },
-    include: {
+  return await db.query.userSubscriptions.findMany({
+    where: and(
+      eq(userSubscriptions.userId, userId),
+      eq(userSubscriptions.status, 'ACTIVE')
+    ),
+    with: {
       stripeProduct: true,
       stripePrice: true,
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: desc(userSubscriptions.createdAt),
   });
 };
 
@@ -232,9 +230,9 @@ export const getUserTokens = async (
   expired: boolean;
   expiresAt?: Date | null;
 }> => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: {
       tokens: true,
       tokensExpiresAt: true,
       stripeProductId: true,
@@ -249,7 +247,7 @@ export const getUserTokens = async (
 
   if (
     expired &&
-    user.membershipStatus === MembershipStatus.ACTIVE &&
+    user.membershipStatus === MembershipStatusEnum.ACTIVE &&
     user.stripeProductId
   ) {
     await updateUserTokens(userId, user.stripeProductId);
@@ -283,12 +281,12 @@ export const consumeTokens = async (userId: string, amount: number = 1) => {
 };
 
 export const isUserAdmin = async (userId: string): Promise<boolean> => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { role: true },
   });
 
-  return user?.role === UserRole.ADMIN;
+  return user?.role === UserRoleEnum.ADMIN;
 };
 
 export async function checkUserAccess(userId: string, autoSync = true) {
