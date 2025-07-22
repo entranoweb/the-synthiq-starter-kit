@@ -12,14 +12,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CreditCard, Crown, LogOut, Menu, Shield, User, X } from "lucide-react";
-import { User as NextAuthUser } from "next-auth";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-client";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface NavbarProps {
-  user?: NextAuthUser;
+  user?: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+  };
   isAdmin?: boolean;
   hasAccess?: boolean;
   hasSubscription?: boolean;

@@ -88,4 +88,11 @@ export const auth = betterAuth({
   ],
 });
 
-export const { GET, POST } = auth.handler;
+// Export the handler for API routes
+export const { handler } = auth;
+export const GET = handler;
+export const POST = handler;
+
+// For server-side session handling
+export const getSession = auth.api.getSession;
+export const { api } = auth;

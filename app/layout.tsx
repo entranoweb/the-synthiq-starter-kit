@@ -1,7 +1,8 @@
 import { Navbar } from "@/components/navbar";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
-import getSession from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { headers } from "next/headers";
 import {
   checkUserAccess,
   getUserTokens,
@@ -32,7 +33,9 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  const session = await getSession({
+    headers: await headers()
+  });
 
   // Get user data for navbar if authenticated
   let navbarData = {};
