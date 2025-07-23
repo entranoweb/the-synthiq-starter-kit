@@ -1,18 +1,19 @@
 # Authentication System
 
-## NextAuth.js Configuration
+## BetterAuth Configuration
 
 ### Setup Location
 - Main config: `lib/auth.ts`
-- API route: `app/api/auth/[...nextauth]/route.ts`
-- Type definitions: `types/next-auth.d.ts`
+- API routes: `app/api/auth/[...all]/route.ts`
+- Client config: `lib/auth-client.ts`
 
 ### Authentication Flow
 1. User clicks "Sign in with Google"
 2. Redirects to Google OAuth
 3. Google returns user data
-4. NextAuth creates/updates user in database
+4. BetterAuth creates/updates user in database
 5. Session created with custom user data
+6. BetterAuth Stripe plugin handles customer integration
 
 ## Provider Configuration
 
@@ -27,8 +28,8 @@ GoogleProvider({
 ### Required Environment Variables
 - `GOOGLE_CLIENT_ID` - Google OAuth client ID
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
-- `NEXTAUTH_SECRET` - JWT encryption secret (32+ chars)
-- `NEXTAUTH_URL` - Application URL for callbacks
+- `BETTER_AUTH_SECRET` - JWT encryption secret (32+ chars)
+- `BETTER_AUTH_URL` - Application URL for callbacks
 
 ## Session Management
 
@@ -83,16 +84,19 @@ session({ session, user }) {
 
 ## Database Integration
 
-### Prisma Adapter
-- `@next-auth/prisma-adapter` package
+### Drizzle Adapter
+- `drizzleAdapter` from BetterAuth
 - Automatic user/account/session management
-- Database schema includes required NextAuth tables
+- Database schema includes required BetterAuth tables
+- PostgreSQL with enum support
 
 ### Required Database Tables
-- `accounts` - OAuth provider accounts
-- `sessions` - Active user sessions
-- `users` - User profiles and roles
-- `verificationtokens` - Email verification (if used)
+- `account` - OAuth provider accounts
+- `session` - Active user sessions
+- `user` - User profiles and roles
+- `verification` - Email verification (if used)
+- `stripeCustomers` - Stripe customer integration
+- `userSubscriptions` - Subscription management
 
 ## Access Control Functions
 
@@ -106,11 +110,11 @@ export const checkUserAccess = async (userId: string)
 
 ### Client-Side Session Access
 ```typescript
-// Using next-auth/react
-import { useSession } from 'next-auth/react'
+// Using BetterAuth client
+import { authClient } from '@/lib/auth-client'
 
-const { data: session, status } = useSession()
-if (session?.user?.role === 'ADMIN') {
+const session = authClient.useSession()
+if (session.data?.user?.role === 'ADMIN') {
   // Admin access
 }
 ```
@@ -119,10 +123,13 @@ if (session?.user?.role === 'ADMIN') {
 
 ### Server Components
 ```typescript
-import getSession from '@/lib/auth'
+import { getSession } from '@/lib/auth'
+import { headers } from 'next/headers'
 
 export default async function ProtectedPage() {
-  const session = await getSession()
+  const session = await getSession({
+    headers: await headers()
+  })
   if (!session) redirect('/auth/signin')
   // Page content
 }

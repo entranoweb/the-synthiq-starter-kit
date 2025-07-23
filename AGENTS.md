@@ -1,12 +1,13 @@
-# Migration Guide for AI Assistants
+# Technical Guide for AI Assistants
 
-This project is migrating from **NextAuth** with **Prisma** to **BetterAuth** using **Drizzle** ORM on **Supabase**. The legacy implementation still exists across the codebase, so assistants should follow these guidelines when implementing migration tasks.
+This project has **completed migration** from **NextAuth** with **Prisma** to **BetterAuth** using **Drizzle** ORM on **Supabase**. The codebase now runs on the new stack with all legacy code removed.
 
-## Key Locations to Update
+## Current Stack
 
-- `lib/auth.ts` – authentication logic currently tied to NextAuth and Prisma
-- `prisma/` – legacy Prisma schema and migrations
-- `app/api/` – API routes relying on NextAuth and Prisma
+- `lib/auth.ts` – BetterAuth configuration with Drizzle adapter
+- `lib/db/schema.ts` – Drizzle ORM schema with PostgreSQL enums
+- `app/api/auth/[...all]/route.ts` – BetterAuth API routes
+- `lib/auth-client.ts` – BetterAuth client configuration
 
 ## Testing Commands
 
@@ -21,13 +22,14 @@ pnpm build
 ## Commit Message Format
 
 ```
-[MIGRATION/<phase>] <scope>: <message>
+[FEATURE/BUGFIX/REFACTOR] <scope>: <message>
 ```
 
 Example:
 
 ```
-[MIGRATION/phase-1] auth: replace NextAuth adapter with BetterAuth
+[FEATURE] auth: add new BetterAuth Stripe integration
+[BUGFIX] db: fix enum import in admin components
 ```
 
 ## Success Checklist for Each Phase

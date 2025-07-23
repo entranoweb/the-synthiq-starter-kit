@@ -27,7 +27,7 @@ export default function HomePage() {
             <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm">
               <Star className="h-4 w-4 text-blue-500" />
               <span className="text-sm font-medium text-blue-600">
-                Welcome to Forger Starter Kit
+                Welcome to Synthiq Starter Kit
               </span>
             </div>
           </div>

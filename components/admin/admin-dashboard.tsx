@@ -3,7 +3,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, DollarSign, Users } from "lucide-react";
 import { useState } from "react";
-import { UserRole } from "../../lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../../app/generated/prisma"
+import { userRoleEnum } from "../../lib/db/schema";
+
+// Type alias for compatibility
+type UserRole = (typeof userRoleEnum.enumValues)[number];
+
+// Constants for enum validation
+const UserRoleEnum = {
+  USER: 'USER' as const,
+  PREMIUM: 'PREMIUM' as const,
+  ADMIN: 'ADMIN' as const,
+  BANNED: 'BANNED' as const
+};
 import UserManagement from "./user-management";
 
 interface AdminDashboardProps {

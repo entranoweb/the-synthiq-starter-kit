@@ -21,7 +21,18 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserRole } from "../../lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../../app/generated/prisma"
+import { userRoleEnum } from "../../lib/db/schema";
+
+// Type alias for compatibility
+type UserRole = (typeof userRoleEnum.enumValues)[number];
+
+// Constants for enum validation
+const UserRoleEnum = {
+  USER: 'USER' as const,
+  PREMIUM: 'PREMIUM' as const,
+  ADMIN: 'ADMIN' as const,
+  BANNED: 'BANNED' as const
+};
 
 interface User {
   id: string;
@@ -55,7 +66,7 @@ export default function UserManagement({
     tokens: string;
     tokensExpiresAt: Date | undefined;
   }>({
-    role: UserRole.USER,
+    role: UserRoleEnum.USER,
     tokens: "0",
     tokensExpiresAt: undefined,
   });
@@ -82,7 +93,7 @@ export default function UserManagement({
   const cancelEditing = () => {
     setEditingUser(null);
     setEditData({
-      role: UserRole.USER,
+      role: UserRoleEnum.USER,
       tokens: "0",
       tokensExpiresAt: undefined,
     });
@@ -126,11 +137,11 @@ export default function UserManagement({
 
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
-      case UserRole.ADMIN:
+      case UserRoleEnum.ADMIN:
         return "destructive";
-      case UserRole.PREMIUM:
+      case UserRoleEnum.PREMIUM:
         return "default";
-      case UserRole.BANNED:
+      case UserRoleEnum.BANNED:
         return "destructive";
       default:
         return "secondary";
@@ -195,10 +206,10 @@ export default function UserManagement({
                         disabled={updating[user.id]}
                         className="flex h-8 w-full items-center justify-between rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <option value={UserRole.USER}>USER</option>
-                        <option value={UserRole.PREMIUM}>PREMIUM</option>
-                        <option value={UserRole.ADMIN}>ADMIN</option>
-                        <option value={UserRole.BANNED}>BANNED</option>
+                        <option value={UserRoleEnum.USER}>USER</option>
+                        <option value={UserRoleEnum.PREMIUM}>PREMIUM</option>
+                        <option value={UserRoleEnum.ADMIN}>ADMIN</option>
+                        <option value={UserRoleEnum.BANNED}>BANNED</option>
                       </select>
                     ) : (
                       <Badge variant={getRoleBadgeVariant(user.role)}>

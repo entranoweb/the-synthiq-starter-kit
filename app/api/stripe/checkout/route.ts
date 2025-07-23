@@ -1,11 +1,13 @@
-import getSession from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
-import { createOrRetrieveCustomer } from "@/lib/stripe-admin";
+import { db } from "@/lib/db";
+import { stripeCustomers } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getSession({ headers: req.headers });
 
     if (!session?.user?.email) {
       return new NextResponse("Unauthorized", { status: 401 });
@@ -17,10 +19,32 @@ export async function POST(req: NextRequest) {
       return new NextResponse("Price ID is required", { status: 400 });
     }
 
-    const customerId = await createOrRetrieveCustomer({
-      uuid: session.user.id,
-      email: session.user.email,
+    // Get or create Stripe customer using BetterAuth integration
+    let stripeCustomer = await db.query.stripeCustomers.findFirst({
+      where: eq(stripeCustomers.userId, session.user.id),
     });
+
+    let customerId: string;
+    if (stripeCustomer) {
+      customerId = stripeCustomer.stripeCustomerId;
+    } else {
+      // Create new Stripe customer - BetterAuth Stripe plugin should handle this
+      // but we'll create manually for compatibility
+      const customer = await stripe.customers.create({
+        email: session.user.email,
+        metadata: {
+          userId: session.user.id,
+        },
+      });
+      customerId = customer.id;
+      
+      // Store in database
+      await db.insert(stripeCustomers).values({
+        id: crypto.randomUUID(),
+        userId: session.user.id,
+        stripeCustomerId: customer.id,
+      });
+    }
 
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,

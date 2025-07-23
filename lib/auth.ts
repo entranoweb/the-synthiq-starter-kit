@@ -25,7 +25,7 @@ export const auth = betterAuth({
     },
   },
   session: {
-    cookieName: "next-auth.session-token", // Preserve existing sessions
+    cookieName: "better-auth.session-token", // BetterAuth session cookie
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     fields: {
       expiresAt: "expires", // Map existing `expires` field to BetterAuth's `expiresAt`

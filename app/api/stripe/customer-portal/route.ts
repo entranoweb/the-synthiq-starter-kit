@@ -1,9 +1,9 @@
-import { PrismaClient } from "@/lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "@/app/generated/prisma"
 import { getSession } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
+import { db } from "@/lib/db";
+import { stripeCustomers } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,10 +17,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the customer's Stripe customer ID
-    const stripeCustomer = await prisma.stripeCustomer.findUnique({
-      where: {
-        userId: session.user.id,
-      },
+    const stripeCustomer = await db.query.stripeCustomers.findFirst({
+      where: eq(stripeCustomers.userId, session.user.id),
     });
 
     if (!stripeCustomer?.stripeCustomerId) {

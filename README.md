@@ -1,16 +1,17 @@
-# Forger Starter Kit - Next.js + Stripe + NextAuth
+# Synthiq Starter Kit - Next.js + Stripe + BetterAuth
 
-A complete full-stack starter kit that integrates Next.js with Stripe payments, NextAuth authentication, and ShadcnUI components. This project provides a solid foundation for building SaaS applications with subscription-based business models.
+A complete full-stack starter kit that integrates Next.js with Stripe payments, BetterAuth authentication, Drizzle ORM, and ShadcnUI components. This project provides a solid foundation for building SaaS applications with subscription-based business models.
 
 ## 🚀 Features
 
 ### Authentication & Authorization
 
-- **NextAuth.js** integration with Drizzle adapter
+- **BetterAuth** integration with Drizzle adapter
 - **Google OAuth** authentication
 - **Role-based access control** (USER, PREMIUM, ADMIN)
 - Session management and middleware protection
 - User profile management
+- **BetterAuth Stripe plugin** for seamless payment integration
 
 ### Database & ORM
 
@@ -106,7 +107,7 @@ Create a `.env.local` file in the root directory with the following variables:
 
 ```env
 # Database
-DATABASE_URL="postgresql://postgres:password@localhost:5432/forger_starter_kit"
+DATABASE_URL="postgresql://postgres:password@localhost:5432/synthiq_starter_kit"
 
 # NextAuth (Generate a random secret with: openssl rand -base64 32)
 NEXTAUTH_URL="http://localhost:3000"

@@ -2,9 +2,20 @@
 import { isUserAdmin } from "@/lib/subscription";
 import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient, UserRole } from "@/lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../../../generated/prisma"
+import { db } from "@/lib/db";
+import { users, userRoleEnum } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 
-const prisma = new PrismaClient();
+// Type alias for compatibility
+type UserRole = (typeof userRoleEnum.enumValues)[number];
+
+// Constants for enum validation
+const UserRoleEnum = {
+  USER: 'USER' as const,
+  PREMIUM: 'PREMIUM' as const, 
+  ADMIN: 'ADMIN' as const,
+  BANNED: 'BANNED' as const
+};
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     const updateData: any = {};
 
-    if (role && Object.values(UserRole).includes(role)) {
+    if (role && Object.values(UserRoleEnum).includes(role)) {
       updateData.role = role;
     }
 
@@ -51,18 +62,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        tokens: true,
-        tokensExpiresAt: true,
-      },
-    });
+    const updatedUser = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        tokens: users.tokens,
+        tokensExpiresAt: users.tokensExpiresAt,
+      });
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {

@@ -1,5 +1,5 @@
 import { Navbar } from "@/components/navbar";
-import { SessionProvider } from "@/components/providers/session-provider";
+
 import { Toaster } from "@/components/ui/sonner";
 import { getSession } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -24,7 +24,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Forger Starter Kit",
+  title: "Synthiq Starter Kit",
   description: "Next.js starter with NextAuth and Stripe",
 };
 
@@ -65,11 +65,9 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <NextTopLoader showSpinner={false} color="#5c7aff" />
-        <SessionProvider session={session}>
-          <Navbar {...navbarData} />
-          {children}
-          <Toaster />
-        </SessionProvider>
+        <Navbar {...navbarData} />
+        {children}
+        <Toaster />
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-# The AI Forger Starter Kit - AI Assistant Guide
+# The AI Synthiq Starter Kit - AI Assistant Guide
 
 ## Project Overview
 Next.js 15 + Stripe + NextAuth + Prisma + ShadcnUI starter kit for SaaS applications with subscription management and token-based usage tracking.
