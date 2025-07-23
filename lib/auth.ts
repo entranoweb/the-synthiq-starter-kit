@@ -6,7 +6,7 @@ import { db } from "./db";
 import * as schema from "./db/schema";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-06-30.basil",
+
 });
 
 export const auth = betterAuth({
@@ -25,12 +25,8 @@ export const auth = betterAuth({
     },
   },
   session: {
-    cookieName: "better-auth.session-token", // BetterAuth session cookie
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    fields: {
-      expiresAt: "expires", // Map existing `expires` field to BetterAuth's `expiresAt`
-      token: "sessionToken" // Map existing `sessionToken` field to BetterAuth's `token`
-    }
+    strategy: 'jwt',
+    cookieName: 'next-auth.session-token',
   },
   account: {
     fields: {

@@ -1,14 +1,9 @@
-import { pgTable, text, integer, boolean, jsonb, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-
-// Define enums directly in schema for Drizzle Kit compatibility
-export const userRoleEnum = pgEnum("user_role", ["USER", "PREMIUM", "ADMIN", "BANNED"]);
-export const membershipStatusEnum = pgEnum("membership_status", [
-  "ACTIVE",
-  "INACTIVE", 
-  "CANCELED",
-  "PAST_DUE"
-]);
+import {
+  userRoleEnum,
+  membershipStatusEnum,
+} from '@/lib/db/enums';
 
 export const organizations = pgTable("organizations", {
   id: text("id").primaryKey(),
