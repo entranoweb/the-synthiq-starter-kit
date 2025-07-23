@@ -1,14 +1,19 @@
 import { betterAuth } from "better-auth";
 import { stripe } from "@better-auth/stripe";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import Stripe from "stripe";
 import { db } from "./db";
+import * as schema from "./db/schema";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
 });
 
 export const auth = betterAuth({
-  database: db,
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema,
+  }),
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,

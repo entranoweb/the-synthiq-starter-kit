@@ -1,6 +1,14 @@
-import { pgTable, text, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean, jsonb, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { userRoleEnum, membershipStatusEnum } from "./enums";
+
+// Define enums directly in schema for Drizzle Kit compatibility
+export const userRoleEnum = pgEnum("user_role", ["USER", "PREMIUM", "ADMIN", "BANNED"]);
+export const membershipStatusEnum = pgEnum("membership_status", [
+  "ACTIVE",
+  "INACTIVE", 
+  "CANCELED",
+  "PAST_DUE"
+]);
 
 export const organizations = pgTable("organizations", {
   id: text("id").primaryKey(),
@@ -173,28 +181,3 @@ export const paymentHistoryRelations = relations(paymentHistory, ({ one }) => ({
 export const organizationRelations = relations(organizations, ({ many }) => ({
   users: many(users),
 }));
-
-export {
-  accounts,
-  sessions,
-  verificationTokens,
-  users,
-  stripeProducts,
-  stripePrices,
-  stripeCustomers,
-  userSubscriptions,
-  paymentHistory,
-  organizations,
-  accountRelations,
-  sessionRelations,
-  verificationTokenRelations,
-  userRelations,
-  stripeProductRelations,
-  stripePriceRelations,
-  stripeCustomerRelations,
-  userSubscriptionRelations,
-  paymentHistoryRelations,
-  organizationRelations,
-  userRoleEnum,
-  membershipStatusEnum,
-};

@@ -1,14 +1,14 @@
 import AdminDashboard from "@/components/admin/admin-dashboard";
-import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { users, userSubscriptions, paymentHistory } from "@/lib/db/schema";
+import { eq, inArray, desc, count, sum } from "drizzle-orm";
 import { isUserAdmin } from "@/lib/subscription";
-import { getServerSession } from "next-auth";
+import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { PrismaClient } from "@/lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../generated/prisma"
-
-const prisma = new PrismaClient();
+import { headers } from "next/headers";
 
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession({ headers: await headers() });
 
   if (!session?.user?.id) {
     redirect("/auth/signin");
@@ -19,37 +19,33 @@ export default async function AdminPage() {
     redirect("/dashboard");
   }
 
-  const [users, subscriptions, totalUsersCount, totalRevenue] =
+  const [usersData, subscriptions, totalUsersCount, totalRevenue] =
     await Promise.all([
-      prisma.user.findMany({
-        include: {
+      db.query.users.findMany({
+        with: {
           subscriptions: {
-            where: { status: { in: ["active", "trialing"] } },
-            include: { stripeProduct: true },
-            take: 1,
-            orderBy: { createdAt: "desc" },
-          },
-          _count: {
-            select: {
-              subscriptions: true,
-              paymentHistory: true,
-            },
+            where: inArray(userSubscriptions.status, ["active", "trialing"]),
+            with: { stripeProduct: true },
+            limit: 1,
+            orderBy: [desc(userSubscriptions.createdAt)],
           },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [desc(users.createdAt)],
       }),
-      prisma.userSubscription.findMany({
-        where: { status: { in: ["active", "trialing"] } },
-        include: {
-          user: { select: { name: true, email: true } },
-          stripeProduct: { select: { name: true } },
+      db.query.userSubscriptions.findMany({
+        where: inArray(userSubscriptions.status, ["active", "trialing"]),
+        with: {
+          user: {
+            columns: { name: true, email: true }
+          },
+          stripeProduct: {
+            columns: { name: true }
+          },
         },
-        orderBy: { createdAt: "desc" },
+        orderBy: [desc(userSubscriptions.createdAt)],
       }),
-      prisma.user.count(),
-      prisma.paymentHistory.aggregate({
-        _sum: { amount: true },
-      }),
+      db.select({ count: count() }).from(users),
+      db.select({ sum: sum(paymentHistory.amount) }).from(paymentHistory),
     ]);
 
   const stats = {

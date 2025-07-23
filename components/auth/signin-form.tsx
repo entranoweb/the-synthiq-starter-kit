@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { signIn } from "next-auth/react";
+import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -18,7 +18,7 @@ export function SignInForm() {
   const signInWithGoogle = async () => {
     setIsLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/dashboard" });
+      await authClient.signIn.social({ provider: "google", callbackURL: "/dashboard" });
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
     } finally {

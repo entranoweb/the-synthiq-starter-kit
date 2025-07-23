@@ -1,6 +1,6 @@
-import { authOptions } from "@/lib/auth";
+
 import { isUserAdmin } from "@/lib/subscription";
-import { getServerSession } from "next-auth";
+import { getSession } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient, UserRole } from "@/lib/db/_legacy-prisma-stubs"; // TEMP: redirected from broken "../../../generated/prisma"
 
@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession({ headers: req.headers });
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

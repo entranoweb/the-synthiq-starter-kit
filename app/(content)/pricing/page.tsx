@@ -8,17 +8,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { authOptions } from "@/lib/auth";
+
 import {
   getMembershipTiers,
   getUserSubscription,
   hasActiveSubscription,
 } from "@/lib/subscription";
 import { Check, DollarSign, Headphones, Star, Zap } from "lucide-react";
-import { getServerSession } from "next-auth";
+import { getSession } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export default async function PricingPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getSession({ headers: await headers() });
 
   // Check if user has active subscription
   const userHasActiveSubscription = session?.user?.id
