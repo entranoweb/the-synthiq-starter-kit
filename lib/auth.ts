@@ -6,7 +6,7 @@ import { db } from "./db";
 import * as schema from "./db/schema";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2025-06-30.basil",
 });
 
 export const auth = betterAuth({
