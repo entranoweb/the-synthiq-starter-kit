@@ -1,9 +1,12 @@
 import { betterAuth } from "better-auth";
 import { stripe } from "@better-auth/stripe";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
 import Stripe from "stripe";
 import { db } from "./db";
 import * as schema from "./db/schema";
+// Import our existing subscription logic
+import { getUserSubscription, getUserTokens, updateUserTokens } from "./subscription";
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
@@ -24,19 +27,20 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     },
   },
+  // ✅ Use database sessions for better security and session management
   session: {
-    strategy: 'jwt',
-    cookieName: 'next-auth.session-token',
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+    cookieName: 'better-auth.session-token', // Fixed cookie name
   },
-  account: {
-    fields: {
-      accountId: "providerAccountId",
-      refreshToken: "refresh_token",
-      accessToken: "access_token", 
-      accessTokenExpiresAt: "expires_at",
-      idToken: "id_token",
-    }
-  },
+  // ✅ Security configuration
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    process.env.NEXT_PUBLIC_APP_URL,
+  ].filter(Boolean) as string[],
+  // ✅ Remove custom account mapping - let BetterAuth handle it
+  // account field mapping removed - using defaults
   plugins: [
     stripe({
       stripeClient,
@@ -59,41 +63,54 @@ export const auth = betterAuth({
         ],
       },
       events: {
-        onSubscriptionCreated: async ({ product, user }) => {
-          // Token allocation logic based on product metadata
-          const tokens = Number(product.metadata.tokens ?? 0);
-          
-          if (tokens > 0) {
-            try {
-              // Import here to avoid circular dependency
-              const { db } = await import("./db");
-              const { users } = await import("./db/schema");
-              const { eq } = await import("drizzle-orm");
-              
-              // Update user tokens in database
-              await db.update(users)
-                .set({ 
-                  tokens,
-                  tokensExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-                })
-                .where(eq(users.id, user.id));
-              
-              console.log(`✅ Allocated ${tokens} tokens to user ${user.id}`);
-            } catch (error) {
-              console.error(`❌ Failed to allocate tokens to user ${user.id}:`, error);
-            }
+        onSubscriptionCreated: async ({ product, user }: { product: any; user: any }) => {
+          // ✅ Use existing subscription logic instead of inline code
+          try {
+            await updateUserTokens(user.id, product.id);
+            console.log(`✅ Subscription created and tokens allocated for user ${user.id}`);
+          } catch (error) {
+            console.error(`❌ Failed to handle subscription creation for user ${user.id}:`, error);
           }
         },
       },
     }),
+    // ✅ Add Next.js cookie handling - must be last plugin
+    nextCookies(),
   ],
+  // ✅ Session callbacks to include subscription data
+  callbacks: {
+    async session({ session, user }: { session: any; user: any }) {
+      try {
+        // Extend session with subscription and token data
+        const [subscription, tokens] = await Promise.all([
+          getUserSubscription(user.id, false), // Don't auto-sync here to avoid performance issues
+          getUserTokens(user.id)
+        ]);
+        
+        session.user.subscription = subscription;
+        session.user.tokens = tokens.tokens;
+        session.user.tokensExpired = tokens.expired;
+        session.user.role = user.role;
+        
+        return session;
+      } catch (error) {
+        console.error('Error extending session:', error);
+        return session; // Return basic session if extension fails
+      }
+    },
+  },
 });
 
-// Export the handler for API routes
-export const { handler } = auth;
+// Clean exports following Clinwell pattern
+export type Session = typeof auth.$Infer.Session;
+export type User = typeof auth.$Infer.Session.user;
+
+// For server-side session handling - make getSession the default export to fix imports
+const getSession = auth.api.getSession;
+export default getSession;
+export { getSession };
+
+// Export API and handler for other uses (auth is already exported by the const declaration above)
+export const { api, handler } = auth;
 export const GET = handler;
 export const POST = handler;
-
-// For server-side session handling
-export const getSession = auth.api.getSession;
-export const { api } = auth;
